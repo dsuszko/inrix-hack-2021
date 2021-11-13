@@ -1,0 +1,44 @@
+
+
+<form class="example-form">
+  <mat-form-field id='addressSearch' appearance="fill">
+    <mat-label>Address</mat-label>
+    <input type="text"
+          placeholder="Address"
+          aria-label="Search for a business address"
+          name='address'
+          matInput
+          [(ngModel)]="searchBoxAddress"
+          (ngModelChange)="searchAddress()"
+          [matAutocomplete]="auto">
+    <mat-autocomplete #auto="matAutocomplete">
+      <mat-option *ngFor="let res of osmResults" [value]="res" (click)='selectAddress(res)'>
+        <span style='font-size: 10px'>{{res.display_name}}</span>
+      </mat-option>
+    </mat-autocomplete>
+  </mat-form-field>
+  <mat-form-field appearance="fill">
+    <mat-label>Time Range</mat-label>
+    <mat-select>
+      <mat-option *ngFor="let range of timeRange" [value]="range.value">
+        {{range.display}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  
+  <mat-form-field appearance="fill">
+      <mat-label>Radius</mat-label>
+      <mat-select>
+        <mat-option *ngFor="let r of radius" [value]="radius">
+          {{r}} miles
+        </mat-option>
+      </mat-select>
+  </mat-form-field>
+  
+</form>
+
+<div class="map-container">
+  <div class="map-frame">
+    <div id="map"></div>
+  </div>
+</div>
