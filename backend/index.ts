@@ -3,6 +3,11 @@ const app = express();
 const port = 3000;
 const axios = require('axios');
 
+const dotenv = require('dotenv');
+dotenv.config();
+const appId = process.env.APP_ID;
+const hash = process.env.HASH;
+
 app.get('/', (req, res) => {
   res.send('Hello World!')
 });
@@ -24,9 +29,10 @@ app.listen(port, () => {
 
 
 interface FrontendRequest{
-  address: string,
-  timeRange: 1 | 3 | 6 | 12,
-  radius: 5 | 10 | 25 | 50 | 100,
+  destinationLat: number;
+  destinationLon: number;
+  timeRange: 1 | 3 | 6 | 12;
+  radius: 5 | 10 | 25 | 50 | 100;
 }
 
 interface Result{
