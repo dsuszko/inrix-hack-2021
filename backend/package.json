@@ -1,0 +1,19 @@
+{
+  "name": "INRIXHack2021",
+  "version": "1.0.0",
+  "description": "Our team's project for INRIX Hack 2021",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "build-watch": "tsc -w index.ts",
+    "serve": "node index.js"
+  },
+  "keywords": [],
+  "author": "Jordan Mosakowski, Cameron Greene, Sean Leininger, Grant Goldman, Max Winn",
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "typescript": "^4.4.4"
+  }
+}
