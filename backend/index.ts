@@ -4,10 +4,13 @@ const port = 3000;
 const axios = require('axios');
 const fs = require('fs');
 const dotenv = require('dotenv');
+const cors = require('cors');
 dotenv.config();
 
 const appId = process.env.APP_ID;
 const hash = process.env.HASH;
+
+app.use(cors());
 
 app.get('/', (req, res) => {
   res.send('Hello World!')
@@ -21,8 +24,7 @@ app.get("/http", async (req,res) => {
 });
 
 app.get("/getTripsByDate", async (req,res) => {
-  // let lat =37.778377;
-  // let lon = -122.418107;
+
   let lat = Number(req.query.lat);
   let lon = Number(req.query.lon);
   let data = await fullWorkflow(lat,lon);
@@ -43,7 +45,6 @@ app.get("/test", async (req,res) => {
   }
   catch (error) {
     console.log("CATCH (line 31): " + error);
-    let fs = require("fs");
     let text = fs.readFileSync("./exported/data1-0.json");
     let response = JSON.parse(text);
     res.json(JSON.stringify(response));
@@ -56,18 +57,17 @@ function initializeBoxes(radius, location: number[]){ //location contains longit
   let boxes:Box[][] = [];
   let r=0;
   let c=0;
-  for (let x=radius*-1;x<radius;x+=1){
+  const boxWidth = 0.5;
+  for (let x=radius*-1;x<radius;x+=boxWidth){
     boxes.push([]);
-    for(let y=radius*-1;y<radius;y+=1){
-      let lat1=distanceCoord(x-.5,location,0)[0];
-      let long1=distanceCoord(y-.5,location,90)[1];
-      let lat2=distanceCoord(x+.5,location,0)[0];
-      let long2=distanceCoord(y+.5,location,90)[1];
+    for(let y=radius*-1;y<radius;y+=boxWidth){
+      let lat1=distanceCoord(x-boxWidth/2,location,0)[0];
+      let long1=distanceCoord(y-boxWidth/2,location,90)[1];
+      let lat2=distanceCoord(x+boxWidth/2,location,0)[0];
+      let long2=distanceCoord(y+boxWidth/2,location,90)[1];
       boxes[r][c]={
-        lat1:lat1,
-        lat2:lat2,
-        lon1:long1,
-        lon2:long2,
+        p1:[lat1,long1],
+        p2:[lat2,long2],
         data: []
       };    
        c++;
@@ -102,20 +102,36 @@ function distanceCoord(dist, curLoc: number[], brng){
 
 function processDayData(data,boxes,dayNum){ //pass in call of a single day's worth of data, will process and update box
   initializeDay(boxes, dayNum,data[0].startDateTime);
-  var minLong = boxes[0][0].lon1;
-  var maxLat = boxes[0][0].lat1;
-  var maxLong = boxes[boxes.length-1][boxes[boxes.length-1].length-1].lon2;
-  var minLat = boxes[boxes.length-1][boxes[boxes.length-1].length-1].lat2;
+  let longs = [boxes[0][0].p1[1],boxes[boxes.length-1][boxes[boxes.length-1].length-1].p2[1]];
+  let lats = [boxes[0][0].p1[0],boxes[boxes.length-1][boxes[boxes.length-1].length-1].p2[0]];
+  var minLong = Math.min(...longs);
+  var maxLong = Math.max(...longs);
+  var maxLat = Math.max(...lats);
+  var minLat = Math.min(...lats);
+  // var minLong = boxes[0][0].p1[1];
+  // var maxLat = boxes[0][0].p1[0];
+  // var maxLong = boxes[boxes.length-1][boxes[boxes.length-1].length-1].p2[1];
+  // var minLat = boxes[boxes.length-1][boxes[boxes.length-1].length-1].p2[0];
   var maxRow = boxes.length;
   var maxCol = boxes[boxes.length-1].length;
-  var boxLat = (maxLat - minLat)/boxes.length;
-  var boxLong = (maxLong - minLong)/boxes.length;
+  var boxLat = Math.abs(maxLat - minLat)/boxes.length;
+  var boxLong = Math.abs(maxLong - minLong)/boxes.length;
+  // if(dayNum==0){
+  //   console.log("MIN",minLat,minLong);
+  //   console.log("MAX",maxLat,maxLong);
+  //   console.log("BOX",boxLat,boxLong);
+  // }
   for(let d of data){
     let lat = Number(d.startLoc.split(",")[0]);
     let lon = Number(d.startLoc.split(",")[1]);
     var row = Math.floor((lat - minLat)/boxLat);
     var column = Math.floor((lon - minLong)/boxLong);
     // console.log(row,column);
+    // if(dayNum==0){
+    //   console.log("DATA FOR BOX ",row, column);
+    //   console.log(lat,lon);
+    //   // console.log(boxes[row][column].p1,boxes[row][column].p2);
+    // }
     if(row>=0 && row<maxRow && column>=0 && column<maxCol){
       boxes[row][column].data[dayNum].numberOfVisits++;
     }
@@ -157,7 +173,7 @@ async function fetchToken() {
       // }
     })
     .catch((error) => {
-      console.error("An error occured: ", error);
+      console.error("An error occured: ", error.message);
       // return error.message;
       throw "error";
     });
@@ -165,42 +181,49 @@ async function fetchToken() {
 }
 
 async function tradeAreaTrips(point, startDate) {
-  const axiosConfig = {
-    headers: {
-      "content-type": "application/json",
-      "Accept": "application/json",
-      "Authorization": await fetchToken(),
+  try{
+    const axiosConfig = {
+      headers: {
+        "content-type": "application/json",
+        "Accept": "application/json",
+        "Authorization": await fetchToken(),
+      }
     }
+
+    let od: string = "destination";
+    let geoFilterType: string = "circle";
+    let radius: string = "500ft";
+    //point is given
+    let limit: number = 10000;
+    let provider: string = "consumer";
+    //start date is given
+    startDate = "%3E%3D2020-12-01T00%3A00";
+    let endDate: string = "%3C%3D2020-12-31T00%3A00";
+    let endPointType: number = 3;
+    //tripLength is given
+
+    const tripsResponse = await axios
+        .get("https://api.iq.inrix.com/v1/trips?"+
+        "od="+od+"&geoFilterType="+geoFilterType+
+        "&radius="+radius+"&points="+point+
+        "&limit="+limit.toString()+"&startDateTime="+startDate+"&endDateTime="+endDate+"",axiosConfig)
+        // .get("https://api.iq.inrix.com/v1/trips?od="+od+"&geoFilterType="+geoFilterType+"&points="+point+"&limit="+limit
+        // +"&providerType="+provider+"&startDateTime="+startDate+"&endDateTime="+endDate+"&endpointType=3", axiosConfig)
+        .then((response) => {
+            return response.data;
+        })
+        .catch((error) => {
+            console.error("An error occured: ", error.message);
+            throw "error";
+        });
+    
+    return tripsResponse;
   }
-
-  let od: string = "destination";
-  let geoFilterType: string = "circle";
-  let radius: string = "500ft";
-  //point is given
-  let limit: number = 10000;
-  let provider: string = "consumer";
-  //start date is given
-  startDate = "%3E%3D2020-12-01T00%3A00";
-  let endDate: string = "%3C%3D2020-12-31T00%3A00";
-  let endPointType: number = 3;
-  //tripLength is given
-
-  const tripsResponse = await axios
-      .get("https://api.iq.inrix.com/v1/trips?"+
-      "od="+od+"&geoFilterType="+geoFilterType+
-      "&radius="+radius+"&points="+point+
-      "&limit="+limit.toString()+"&startDateTime="+startDate+"&endDateTime="+endDate+"",axiosConfig)
-      // .get("https://api.iq.inrix.com/v1/trips?od="+od+"&geoFilterType="+geoFilterType+"&points="+point+"&limit="+limit
-      // +"&providerType="+provider+"&startDateTime="+startDate+"&endDateTime="+endDate+"&endpointType=3", axiosConfig)
-      .then((response) => {
-          return response.data;
-      })
-      .catch((error) => {
-          console.error("An error occured: ", error);
-          throw "error";
-      });
-  
-  return tripsResponse;
+  catch(e){
+    console.log(e);
+    let text = fs.readFileSync("./exported/data1-0.json");
+    return JSON.parse(text);
+  }
 }
 
 
@@ -223,10 +246,8 @@ interface Result{
 }
 
 interface Box{
-  lat1: number;
-  lat2: number;
-  lon1: number;
-  lon2: number;
+  p1: number[];
+  p2: number[];
 
   data: BoxData[];
 }
@@ -237,8 +258,8 @@ interface BoxData{
 }
 
 async function getDailyTripData(lat,lon){
-  // let result = await tradeAreaTrips(lat.toString()+"%7C"+lon.toString(), "%3E%3D2020-12-01T00%3A00");
-  let result = JSON.parse(fs.readFileSync("./exported/data4-0.json"));
+  let result = await tradeAreaTrips(lat.toString()+"%7C"+lon.toString(), "%3E%3D2020-12-01T00%3A00");
+  // let result = JSON.parse(fs.readFileSync("./exported/data4-0.json"));
   let arr = [];
   for(let d of result.data){
     let date: Date = new Date(d.startDateTime);
@@ -254,7 +275,7 @@ async function getDailyTripData(lat,lon){
 async function fullWorkflow(lat: number,lon: number){
   // let lat =37.778377;
   // let lon = -122.418107;
-  let boxes = initializeBoxes(10,[lat,lon]);
+  let boxes = initializeBoxes(5,[lat,lon]);
   let dataByDate = await getDailyTripData(lat,lon);
   // console.log(dataByDate);
   for(let i=0; i<dataByDate.length; i++){
@@ -265,7 +286,9 @@ async function fullWorkflow(lat: number,lon: number){
   // fs.writeFileSync('boxes2.json', JSON.stringify(boxes));
 }
 
-// fullWorkflow();
+  // let lat =37.778377;
+  // let lon = -122.418107;
+fullWorkflow(37.778377,-122.418107);
 // fs.writeFileSync('box.json', JSON.stringify(initializeBoxes(10,[37.778377,-122.418107])));
 
 
