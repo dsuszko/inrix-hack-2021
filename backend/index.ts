@@ -2,9 +2,10 @@ const express = require('express');
 const app = express();
 const port = 3000;
 const axios = require('axios');
-
+const fs = require('fs');
 const dotenv = require('dotenv');
 dotenv.config();
+
 const appId = process.env.APP_ID;
 const hash = process.env.HASH;
 
@@ -15,6 +16,16 @@ app.get('/', (req, res) => {
 app.get("/http", async (req,res) => {
   const response = await axios('https://api.sampleapis.com/baseball/hitsSingleSeason/');
   const data = response.data;
+  //Here you would probably send send your data off to another function.
+  res.send(data);
+});
+
+app.get("/getTripsByDate", async (req,res) => {
+  // let lat =37.778377;
+  // let lon = -122.418107;
+  let lat = Number(req.query.lat);
+  let lon = Number(req.query.lon);
+  let data = await fullWorkflow(lat,lon);
   //Here you would probably send send your data off to another function.
   res.send(data);
 });
@@ -31,78 +42,86 @@ app.get("/test", async (req,res) => {
   res.send(response);
 });
 
-function initializeBoxes(radius, location){ //location contains longitude and latitude from address
+function initializeBoxes(radius, location: number[]){ //location contains longitude and latitude from address
   let boxes:Box[][] = [];
   let r=0;
   let c=0;
   for (let x=radius*-1;x<radius;x+=1){
     boxes.push([]);
     for(let y=radius*-1;y<radius;y+=1){
-      let lat1=distanceCoord(x-.5,location,90)[0];
-      let long1=distanceCoord(y-.5,location,180)[1];
-      let lat2=distanceCoord(x+.5,location,90)[0];
-      let long2=distanceCoord(y+.5,location,180)[1];
+      let lat1=distanceCoord(x-.5,location,0)[0];
+      let long1=distanceCoord(y-.5,location,90)[1];
+      let lat2=distanceCoord(x+.5,location,0)[0];
+      let long2=distanceCoord(y+.5,location,90)[1];
       boxes[r][c]={
         lat1:lat1,
         lat2:lat2,
         lon1:long1,
         lon2:long2,
         data: []
-        
       };    
        c++;
-     }
-     r++;
+    }
+    c = 0;
+    r++;
   }
   return boxes;
 }
 
-function distanceCoord(dist, curLoc, brng){
-  var RofE = 6378.1; //radius of the earth in km
-  var distkm = dist/0.907; //converts distance to km for calculation
-  var tempLat = curLoc[0] * (Math.PI/180);
-  var tempLong = curLoc[1] * (Math.PI/180);
+function distanceCoord(dist, curLoc: number[], brng){
+  var R = 3958.8; //radius of the earth in km
+  // var distkm = dist
+  const lat1 = curLoc[0] * (Math.PI/180);
+  const lon1 = curLoc[1] * (Math.PI/180);
   brng = brng * (Math.PI/180);
 
-  var newlat = Math.asin(Math.sin(tempLat) * Math.cos(distkm/RofE) + Math.cos(tempLat) * Math.sin(distkm/RofE)*Math.cos(brng));
-  var newlong = tempLong + Math.atan2(Math.sin(brng)*Math.sin(distkm/RofE)*Math.cos(tempLat), Math.cos(distkm/RofE)-Math.sin(tempLat)*Math.sin(newlat));
+  let lat2 = Math.asin( Math.sin(lat1)*Math.cos(dist/R) +
+     Math.cos(lat1)*Math.sin(dist/R)*Math.cos(brng))
 
-  newlat = newlat * (180/Math.PI);
-  newlong = newlong *(180/Math.PI);
+  let lon2 = lon1 + Math.atan2(Math.sin(brng)*Math.sin(dist/R)*Math.cos(lat1),
+             Math.cos(dist/R)-Math.sin(lat1)*Math.sin(lat2))
 
-  var newLoc = [newlat, newlong];
-  return newLoc ;
+  // var newlat = Math.asin(Math.sin(tempLat) * Math.cos(dist/RofE) + Math.cos(tempLat) * Math.sin(dist/RofE)*Math.cos(brng));
+  // var newlong = tempLong + Math.atan2(Math.sin(brng)*Math.sin(dist/RofE)*Math.cos(tempLat), Math.cos(dist/RofE)-Math.sin(tempLat)*Math.sin(newlat));
+
+  lat2 = lat2 * (180/Math.PI);
+  lon2 = lon2 *(180/Math.PI);
+
+  return [lat2, lon2];
 }
 
 function processDayData(data,boxes,dayNum){ //pass in call of a single day's worth of data, will process and update box
   initializeDay(boxes, dayNum,data[0].startDateTime);
   var minLong = boxes[0][0].lon1;
   var maxLat = boxes[0][0].lat1;
-  var maxLong = boxes[boxes.length-1][boxes.length-1].lon2;
-  var minLat = boxes[boxes.length-1][boxes.length-1].lat2;
+  var maxLong = boxes[boxes.length-1][boxes[boxes.length-1].length-1].lon2;
+  var minLat = boxes[boxes.length-1][boxes[boxes.length-1].length-1].lat2;
+  var maxRow = boxes.length;
+  var maxCol = boxes[boxes.length-1].length;
   var boxLat = (maxLat - minLat)/boxes.length;
   var boxLong = (maxLong - minLong)/boxes.length;
   for(let d of data){
-    var row = Math.floor((d.startloc[0] - minLat)/boxLat);
-    var column = Math.floor((d.startloc[1] - minLong)/boxLong);
-    boxes[row][column].boxData[dayNum].numberOfVisits++;
+    let lat = Number(d.startLoc.split(",")[0]);
+    let lon = Number(d.startLoc.split(",")[1]);
+    var row = Math.floor((lat - minLat)/boxLat);
+    var column = Math.floor((lon - minLong)/boxLong);
+    // console.log(row,column);
+    if(row>=0 && row<maxRow && column>=0 && column<maxCol){
+      boxes[row][column].data[dayNum].numberOfVisits++;
+    }
   }
 }
 
 function initializeDay(boxes: Box[][], dayNum,dayVal){
   var i = 0;
   var j = 0;
-  while(i < boxes.length)
-  {
-    while(j < boxes[i].length)
-    {
-      boxes[i][j].data[dayNum]={
+  for(let row of boxes){
+    for(let col of row){
+      col.data[dayNum]={
         startDate:dayVal,
         numberOfVisits:0,
       };
-      j++;
     }
-    i++;
   }
 }
 
@@ -123,7 +142,7 @@ async function fetchToken() {
     .then((response) => {
       // if (response.status === 200) {
       // this.accessToken = response.data;
-      console.log(response.data);
+      // console.log(response.data);
       return "Bearer "+response.data.result.token;
       // }
     })
@@ -206,3 +225,41 @@ interface BoxData{
   startDate: Date;
   numberOfVisits: number;
 }
+
+async function getDailyTripData(lat,lon){
+  // let result = await tradeAreaTrips(lat.toString()+"%7C"+lon.toString(), "%3E%3D2020-12-01T00%3A00");
+  let result = JSON.parse(fs.readFileSync("./exported/data4-0.json"));
+  let arr = [];
+  for(let d of result.data){
+    let date: Date = new Date(d.startDateTime);
+    const i = date.getDate() - 1;
+    if(arr[i]==null){
+      arr[i] = [];
+    }
+    arr[i].push(d);
+  }
+  return arr;
+}
+
+async function fullWorkflow(lat: number,lon: number){
+  // let lat =37.778377;
+  // let lon = -122.418107;
+  let boxes = initializeBoxes(10,[lat,lon]);
+  let dataByDate = await getDailyTripData(lat,lon);
+  // console.log(dataByDate);
+  for(let i=0; i<dataByDate.length; i++){
+    processDayData(dataByDate[i],boxes,i);
+  }
+  return boxes;
+  // fs.writeFileSync('dataByDate.json', JSON.stringify(dataByDate));
+  // fs.writeFileSync('boxes2.json', JSON.stringify(boxes));
+}
+
+// fullWorkflow();
+// fs.writeFileSync('box.json', JSON.stringify(initializeBoxes(10,[37.778377,-122.418107])));
+
+
+
+// let rawdata = fs.readFileSync('student.json');
+// let student = JSON.parse(rawdata);
+// console.log(student);
