@@ -155,7 +155,7 @@ export class HomeComponent implements AfterViewInit {
     }
     var myIcon = leaflet.icon({
       iconUrl: 'assets/White_Logo.png',
-      // iconSize: [32],
+      iconSize: [32,32],
     });
     const marker = leaflet.marker([this.selectedAddress?.lat ?? 0, this.selectedAddress?.lon ?? 0], {icon: myIcon}).addTo(this.map);
     this.points.push(marker);
