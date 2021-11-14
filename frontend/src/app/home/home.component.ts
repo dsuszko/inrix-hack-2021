@@ -113,20 +113,6 @@ export class HomeComponent implements AfterViewInit {
           '#60f42a',//green
           '#0ae7ff',//light-blue
         ];
-        // let colors = [
-        //   '#ff292d',//red
-        //   '#f8961e',//orange
-        //   '#ffe81a',//yellow
-        //   '#80e931',//green
-        //   '#32c3b7',//light-blue
-        // ];
-        // let colors = [
-        //   '#ffe01f',//yellow
-        //   '#ff931f',//orange
-        //   '#ff1f44',//red
-        //   '#ff19fb',//pink
-        //   '#961fff',//purple
-        // ];
         if((first==0 && second==0) || (first==1 && second==0) || (first==0 && second==1)){
           continue;
         } else if(first==0){
@@ -154,9 +140,6 @@ export class HomeComponent implements AfterViewInit {
         percentDif = Math.floor(percentDif * 100);
         let rect = leaflet.rectangle([box.p1,box.p2], {color: color, weight: 1, stroke: false, fillOpacity: 0.4})
         .bindTooltip(percentDif.toString()+"% change",{direction:'top',});
-        // rect.on("click",() => {
-        //   console.log(box);
-        // });
         this.points.push(rect);
         rect.addTo(this.map);
       }
@@ -168,10 +151,6 @@ export class HomeComponent implements AfterViewInit {
     const marker = leaflet.marker([this.selectedAddress?.lat ?? 0, this.selectedAddress?.lon ?? 0], {icon: myIcon}).addTo(this.map);
     this.points.push(marker);
     marker.addTo(this.map);
-
-    // const circle = leaflet.circle([this.selectedAddress?.lat ?? 0, this.selectedAddress?.lon ?? 0], {color: "#ffffff", radius: 100, fillOpacity: 1});
-    // this.points.push(circle);
-    // circle.addTo(this.map);
   }
 
   rawDataMap(){
@@ -219,14 +198,6 @@ export class HomeComponent implements AfterViewInit {
         tooltip.setContent('<canvas id="myChart-'+boxId.toString()+'" width="350" height="250"></canvas>');
         let rect = leaflet.rectangle([box.p1,box.p2], {color: color, weight: 1, stroke: false, fillOpacity: 0.4})
         .bindTooltip(this.showComparison==0 ? tooltip : (count.toString()+" people visited"),{direction:'top',})
-        // .bindTooltip((count.toString()+" people visited"),{direction:'bottom',});
-        // rect.bindPopup(tooltip);
-        // rect.on("click",() => {
-        //   console.log(box);
-        // });
-        rect.on("click", () => {
-          rect.openPopup();
-        })
         rect.on("tooltipopen", () => {
           if(document.getElementById('myChart-'+box?.id?.toString())==undefined){
             return;
@@ -316,9 +287,6 @@ export class HomeComponent implements AfterViewInit {
         }
         let rect = leaflet.rectangle([box.p1,box.p2], {color: color, weight: 1, stroke: false, fillOpacity: 0.4})
         .bindTooltip(count.toString()+" people visited",{direction:'top',});
-        // rect.on("click",() => {
-        //   console.log(box);
-        // });
         this.points2.push(rect);
         rect.addTo(this.map2);
       }
@@ -366,20 +334,6 @@ export class HomeComponent implements AfterViewInit {
       center: [ 37.76, -122.435 ],
       zoom: 13
     });
-
-      // if(this.boxZoom > 0.25 && newZoom >=16){
-      //   this.boxZoom = 0.25;
-      //   if(this.selectedAddress!=null){
-      //     this.selectAddress(this.selectedAddress);
-      //   }
-      // }
-      // else if(this.boxZoom<0.5 && newZoom < 16){
-      //   this.boxZoom = 0.5;
-      //   if(this.selectedAddress!=null){
-      //     this.selectAddress(this.selectedAddress);
-      //   }
-      // }
-      // console.log(newZoom);
     this.map.on('zoomend', (e:any) => {
       let center = this.map.getCenter();
       let newZoom = e.target._zoom;
