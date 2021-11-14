@@ -52,8 +52,16 @@ input{
   .map-frame {
     border: 2px solid black;
     height: 100%;
+    border-radius: 5px;
   }
   
   #map {
     height: 100%;
+    display: inline-block;
+  }
+  
+  #map2 {
+    height: 100%;
+    width: 50%;
+    display: inline-block;
   }

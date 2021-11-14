@@ -33,7 +33,7 @@
 
     <mat-form-field class='field' appearance="fill">
       <mat-label>Display option</mat-label>
-      <mat-select [(ngModel)]='showComparion' name="option" (selectionChange)="updateMap()">
+      <mat-select [(ngModel)]='showComparison' name="option" (selectionChange)="updateMap()">
         <mat-option *ngFor="let option of displayOptions" [value]="option.value">
           {{option.display}}
         </mat-option>
@@ -41,7 +41,7 @@
     </mat-form-field>
 
     <mat-form-field class='field' appearance="fill">
-      <mat-label>{{showComparion ? "First " : ""}}Date Range</mat-label>
+      <mat-label>{{showComparison>0 ? "First " : ""}}Date Range</mat-label>
       <mat-date-range-input [rangePicker]="rangePicker" [min]="minDate" [max]="maxDate">
         <input name='startDate' matStartDate placeholder="Start date" [(ngModel)]="startDate">
         <input name='endDate' matEndDate placeholder="End date" [(ngModel)]="endDate" (dateChange)="updateMap()">
@@ -50,7 +50,7 @@
       <mat-date-range-picker #rangePicker></mat-date-range-picker>
     </mat-form-field>
 
-    <mat-form-field class='field' appearance="fill" *ngIf='showComparion'>
+    <mat-form-field class='field' appearance="fill" *ngIf='showComparison>0'>
       <mat-label>Second Date Range</mat-label>
       <mat-date-range-input [rangePicker]="rangePicker" [min]="minDate" [max]="maxDate">
         <input name='startDate2' matStartDate placeholder="Start date" [(ngModel)]="startDate2">
@@ -64,8 +64,9 @@
 
 <div class="map-container">
   <div class="map-frame">
-    <div id="map"></div>
+    <div id="map" [style.width]="showComparison==2 ? '50%' : '100%'"></div>
+    <div id="map2" [style.opacity]="showComparison==2 ? '1' : '0'"></div>
   </div>
-  <img src='assets/legend-percent.png' *ngIf='selectedAddress!=null && showComparion'>
-  <img src='assets/legend-raw.png' *ngIf='selectedAddress!=null && !showComparion'>
+  <img src='assets/legend-percent.png' *ngIf='selectedAddress!=null && showComparison==1'>
+  <img src='assets/legend-raw.png' *ngIf='selectedAddress!=null && showComparison!=1'>
 </div>
