@@ -34,14 +34,13 @@ export class HomeComponent implements AfterViewInit {
   async searchOSMApi(){
     this.selectedAddress = undefined;
     this.osmResults = await this.http.get<OSMPlace[]>("https://nominatim.openstreetmap.org/search?format=json&q="+this.searchBoxAddress).toPromise();
-    console.log(this.osmResults);
   }
 
   selectAddress(res: OSMPlace){
     this.selectedAddress = res;
     this.searchBoxAddress = res.display_name;
     this.searchAddress.clear();
-    console.log(this.map)
+    console.log(res)
     const circle = leaflet.circle([res.lat, res.lon], {radius: 200}).addTo(this.map);
   }
 
@@ -56,8 +55,6 @@ export class HomeComponent implements AfterViewInit {
       center: [ 37.71, -122.435 ],
       zoom: 12
     });
-
-    console.log(this.map);
 
     const tiles = leaflet.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,

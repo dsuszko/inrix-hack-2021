@@ -20,7 +20,7 @@ app.get("/http", async (req,res) => {
 });
 
 app.get("/test", async (req,res) => {
-  const response = await tradeAreaTrips("37.734%7C-122.47", "%3E%3D2020-12-01T00%3A00");
+  const response = await tradeAreaTrips("37.792137265306124%7C-122.4107742857143", "%3E%3D2020-12-01T00%3A00");
   // const response = await fetchToken();
   console.log(response);
   //Here you would probably send send your data off to another function.
@@ -73,9 +73,10 @@ async function tradeAreaTrips(point, startDate) {
   let geoFilterType: string = "circle";
   let radius: string = "200ft";
   //point is given
-  let limit: number = 100;
+  let limit: number = 10000;
   let provider: string = "consumer";
   //start date is given
+  startDate = "%3E%3D2020-12-01T00%3A00";
   let endDate: string = "%3C%3D2020-12-31T00%3A00";
   let endPointType: number = 3;
   //tripLength is given
@@ -84,7 +85,7 @@ async function tradeAreaTrips(point, startDate) {
       .get("https://api.iq.inrix.com/v1/trips?"+
       "od="+od+"&geoFilterType="+geoFilterType+
       "&radius="+radius+"&points="+point+
-      "&limit="+limit.toString()+"&startDateTime="+startDate+"&endDateTime="+endDate+"&endpointType=3",axiosConfig)
+      "&limit="+limit.toString()+"&startDateTime="+startDate+"&endDateTime="+endDate,axiosConfig)
       // .get("https://api.iq.inrix.com/v1/trips?od="+od+"&geoFilterType="+geoFilterType+"&points="+point+"&limit="+limit
       // +"&providerType="+provider+"&startDateTime="+startDate+"&endDateTime="+endDate+"&endpointType=3", axiosConfig)
       .then((response) => {
