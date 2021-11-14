@@ -26,9 +26,9 @@ app.get("/test", async (req,res) => {
   //Here you would probably send send your data off to another function.
   res.send(response);
 
-  console.log(response.data.length);
+  //console.log(response.data.length);
 
-  for(let i: number = 0; i < )
+  //response.data.foreach(res.send())
 });
 
 app.get("/token", async (req, res) => {
