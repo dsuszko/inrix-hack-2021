@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import * as debounce from "debounce";
 import * as leaflet from 'leaflet';
+import Chart from 'chart.js/auto';
 
 @Component({
   selector: 'app-home',
@@ -58,7 +59,6 @@ export class HomeComponent implements AfterViewInit {
       console.log("Not updating map");
       return;
     }
-    console.log(this.showComparison);
     if(this.showComparison==1){
       this.comparisonMap();
     }
@@ -101,9 +101,8 @@ export class HomeComponent implements AfterViewInit {
     this.points = [];
     for(let row of (this.dateData ?? [])){
       for(let box of row){
-        let half = Math.floor(box.data.length/2);
-        let first = box.data.slice(start,end).map(e => e.numberOfVisits).reduce((a, b) => a + b);
-        let second = box.data.slice(start2,end2).map(e => e.numberOfVisits).reduce((a, b) => a + b);
+        let first = box.data.slice(start,end).map(e => e.length).reduce((a, b) => a + b);
+        let second = box.data.slice(start2,end2).map(e => e.length).reduce((a, b) => a + b);
         let rawDif = second - first;
         let color;
         let percentDif = 0;
@@ -155,9 +154,9 @@ export class HomeComponent implements AfterViewInit {
         percentDif = Math.floor(percentDif * 100);
         let rect = leaflet.rectangle([box.p1,box.p2], {color: color, weight: 1, stroke: false, fillOpacity: 0.4})
         .bindTooltip(percentDif.toString()+"% change");
-        rect.on("click",() => {
-          console.log(box);
-        });
+        // rect.on("click",() => {
+        //   console.log(box);
+        // });
         this.points.push(rect);
         rect.addTo(this.map);
       }
@@ -182,9 +181,10 @@ export class HomeComponent implements AfterViewInit {
     let start = this.startDate.getDate()-1;
     let end = this.endDate?.getDate() ?? 31;
     this.points = [];
+    let boxId = 0;
     for(let row of (this.dateData ?? [])){
       for(let box of row){
-        let count = box.data.slice(start,end).map(e => e.numberOfVisits).reduce((a, b) => a + b);
+        let count = box.data.slice(start,end).map(e => e.length).reduce((a, b) => a + b);
         let color;
         let colors = [
           '#1fff9e',//#1bf1ea
@@ -210,13 +210,57 @@ export class HomeComponent implements AfterViewInit {
         else{
           color=colors[4]
         }
+
+        var tooltip = leaflet.tooltip({
+          direction: 'top',
+          opacity: 0.8
+        });
+        box.id = boxId;
+        tooltip.setContent('<canvas id="myChart-'+boxId.toString()+'" width="300" height="200"></canvas>');
         let rect = leaflet.rectangle([box.p1,box.p2], {color: color, weight: 1, stroke: false, fillOpacity: 0.4})
-        .bindTooltip(count.toString()+" people visited");
-        rect.on("click",() => {
-          console.log(box);
+        .bindTooltip(this.showComparison ? (count.toString()+" people visited") : tooltip);
+        // .bindTooltip(tooltip);
+        // rect.on("click",() => {
+        //   console.log(box);
+        // });
+        rect.on("tooltipopen", () => {
+          let data: Date[] = box.data.slice(start,end).map(d => d.map(e => new Date(e))).flat();
+          let hours = new Array(24).fill(0);
+          for(let d of data){
+            hours[d.getHours()]++;
+          }
+
+          const myChart = new Chart(
+            //@ts-ignore
+            document.getElementById('myChart-'+box.id.toString()),
+            {
+              type: 'bar',
+              data: {
+                labels: [
+                  "0:00","1:00","2:00","3:00","4:00","5:00","6:00",
+                  "7:00","8:00","9:00","10:00","11:00","12:00",
+                  "13:00","14:00","15:00","16:00","17:00","18:00",
+                  "19:00","20:00","21:00","22:00","23:00"
+                ],
+                datasets: [{
+                  backgroundColor: "#673ab7",
+                  label: 'Customers per hour',
+                  data: hours,
+                }
+              ]},
+              options: {
+                scales: {
+                  y: {
+                    beginAtZero: true
+                  }
+                }
+              },
+            }
+          );
         });
         this.points.push(rect);
         rect.addTo(this.map);
+        boxId++;
       }
     }
     var myIcon = leaflet.icon({
@@ -237,7 +281,7 @@ export class HomeComponent implements AfterViewInit {
     this.points2 = [];
     for(let row of (this.dateData ?? [])){
       for(let box of row){
-        let count = box.data.slice(start,end).map(e => e.numberOfVisits).reduce((a, b) => a + b);
+        let count = box.data.slice(start,end).map(e => e.length).reduce((a, b) => a + b);
         let color;
         let colors = [
           '#1fff9e',//#1bf1ea
@@ -265,9 +309,9 @@ export class HomeComponent implements AfterViewInit {
         }
         let rect = leaflet.rectangle([box.p1,box.p2], {color: color, weight: 1, stroke: false, fillOpacity: 0.4})
         .bindTooltip(count.toString()+" people visited");
-        rect.on("click",() => {
-          console.log(box);
-        });
+        // rect.on("click",() => {
+        //   console.log(box);
+        // });
         this.points2.push(rect);
         rect.addTo(this.map2);
       }
@@ -403,7 +447,8 @@ interface Box{
   p1: leaflet.LatLngTuple;
   p2: leaflet.LatLngTuple;
 
-  data: BoxData[];
+  data: Date[][];
+  id: number | undefined;
 }
 
 interface BoxData{

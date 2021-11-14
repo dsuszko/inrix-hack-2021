@@ -105,7 +105,7 @@ function distanceCoord(dist, curLoc: number[], brng){
 }
 
 function processDayData(data,boxes,dayNum){ //pass in call of a single day's worth of data, will process and update box
-  initializeDay(boxes, dayNum,data[0].startDateTime);
+  initializeDay(boxes, dayNum,data[0].endDateTime);
   let longs = [boxes[0][0].p1[1],boxes[boxes.length-1][boxes[boxes.length-1].length-1].p2[1]];
   let lats = [boxes[0][0].p1[0],boxes[boxes.length-1][boxes[boxes.length-1].length-1].p2[0]];
   var minLong = Math.min(...longs);
@@ -137,7 +137,7 @@ function processDayData(data,boxes,dayNum){ //pass in call of a single day's wor
     //   // console.log(boxes[row][column].p1,boxes[row][column].p2);
     // }
     if(row>=0 && row<maxRow && column>=0 && column<maxCol){
-      boxes[row][column].data[dayNum].numberOfVisits++;
+      boxes[row][column].data[dayNum].push(d.endDateTime);
     }
   }
 }
@@ -147,10 +147,7 @@ function initializeDay(boxes: Box[][], dayNum,dayVal){
   var j = 0;
   for(let row of boxes){
     for(let col of row){
-      col.data[dayNum]={
-        startDate:dayVal,
-        numberOfVisits:0,
-      };
+      col.data[dayNum]=[];
     }
   }
 }
@@ -253,7 +250,7 @@ interface Box{
   p1: number[];
   p2: number[];
 
-  data: BoxData[];
+  data: string[][];
 }
 
 interface BoxData{
@@ -266,7 +263,7 @@ async function getDailyTripData(lat,lon){
   // let result = JSON.parse(fs.readFileSync("./exported/data4-0.json"));
   let arr = [];
   for(let d of result.data){
-    let date: Date = new Date(d.startDateTime);
+    let date: Date = new Date(d.endDateTime);
     const i = date.getDate() - 1;
     if(arr[i]==null){
       arr[i] = [];
