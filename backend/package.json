@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "build-watch": "tsc -w index.ts",
-    "serve": "node index.js"
+    "serve": "tsc && node index.js"
   },
   "keywords": [],
   "author": "Jordan Mosakowski, Cameron Greene, Sean Leininger, Grant Goldman, Max Winn",
