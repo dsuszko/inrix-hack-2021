@@ -28,6 +28,15 @@ export class HomeComponent implements AfterViewInit {
   
   selectedAddress: OSMPlace | undefined;
 
+  minDate = new Date(2020,11,1);
+  maxDate = new Date(2020,11,31);
+
+  startDate = new Date(2020,11,1);
+  endDate: Date | undefined = new Date(2020,11,31);
+
+  startDate2 = new Date(2020,11,1);
+  endDate2: Date | undefined = new Date(2020,11,31);
+
   constructor(private http: HttpClient) {
     this.showComparion = false;
   }
@@ -39,7 +48,11 @@ export class HomeComponent implements AfterViewInit {
 
   points: any[] = [];
 
-  updateComparison(){
+  updateMap(){
+    if(this.endDate==null){
+      console.log("Not updating map");
+      return;
+    }
     console.log(this.showComparion);
     if(this.showComparion){
       this.comparisonMap();
@@ -70,12 +83,16 @@ export class HomeComponent implements AfterViewInit {
     for(let p of this.points){
       this.map.removeLayer(p);
     }
+    let start = this.startDate.getDate()-1;
+    let end = this.endDate?.getDate() ?? 31;
+    let start2 = this.startDate2.getDate()-1;
+    let end2 = this.endDate2?.getDate() ?? 31;
     this.points = [];
     for(let row of (this.dateData ?? [])){
       for(let box of row){
         let half = Math.floor(box.data.length/2);
-        let first = box.data.slice(0,half).map(e => e.numberOfVisits).reduce((a, b) => a + b);
-        let second = box.data.slice(half).map(e => e.numberOfVisits).reduce((a, b) => a + b);
+        let first = box.data.slice(start,end).map(e => e.numberOfVisits).reduce((a, b) => a + b);
+        let second = box.data.slice(start2,end2).map(e => e.numberOfVisits).reduce((a, b) => a + b);
         let rawDif = second - first;
         let color;
         let percentDif = 0;
@@ -143,10 +160,12 @@ export class HomeComponent implements AfterViewInit {
     for(let p of this.points){
       this.map.removeLayer(p);
     }
+    let start = this.startDate.getDate()-1;
+    let end = this.endDate?.getDate() ?? 31;
     this.points = [];
     for(let row of (this.dateData ?? [])){
       for(let box of row){
-        let count = box.data.map(e => e.numberOfVisits).reduce((a, b) => a + b);
+        let count = box.data.slice(start,end).map(e => e.numberOfVisits).reduce((a, b) => a + b);
         let color;
         let colors = [
           '#1fff9e',//#1bf1ea
