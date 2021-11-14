@@ -1,6 +1,5 @@
 import { HttpClient } from '@angular/common/http';
 import { AfterViewInit, Component, OnInit } from '@angular/core';
-import { FormControl } from '@angular/forms';
 import * as debounce from "debounce";
 import * as leaflet from 'leaflet';
 
