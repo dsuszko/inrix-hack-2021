@@ -22,15 +22,16 @@ app.get("/http", async (req,res) => {
 app.get("/test", async (req,res) => {
   const response = await tradeAreaTrips("37.734|-122.47", ">=2021-11-13T00:00");
   // const response = await fetchToken();
-  const data = response.data;
   console.log(response.data);
   //Here you would probably send send your data off to another function.
-  res.send(data);
+  res.send(response.data);
 });
 
-
-
-
+app.get("/token", async (req, res) => {
+  const response = await fetchToken();
+  console.log(response);
+  res.send(response);
+})
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
@@ -80,7 +81,7 @@ async function fetchToken() {
       // if (response.status === 200) {
       // this.accessToken = response.data;
       console.log(response.data);
-      return response.data;
+      return response.data.result.token;
       // }
     })
     .catch((error) => {
@@ -93,9 +94,11 @@ async function fetchToken() {
 
 async function tradeAreaTrips(point, startDate) {
   const axiosConfig = {
+    headers: {
       "content-type": "application/json",
       Accept: "application/json",
-      Authorization: await fetchToken(),
+      Authorization: "Bearer " + await fetchToken(),
+    }
   }
 
   let od: string = "destination";
@@ -110,10 +113,10 @@ async function tradeAreaTrips(point, startDate) {
   //tripLength is given
 
   const tripsResponse = await axios
-      .get("https://api.iq.inrix.com/v1/trips?od="+od+"&geoFilterType="+geoFilterType+"&points="+point+"&limit="+limit
-      +"&providerType="+provider+"&startDateTime="+startDate+"&endDateTime="+endDate+"&endpointType=3", axiosConfig)
-      // .get("https://trade-areas-api.inrix.com/v1/trips?od="+od+"&geoFilterType="+geoFilterType+"&points="+point+"&limit="+limit
-      //  +"&providerType="+provider+"&startDateTime="+startDate+"&endDateTime="+endDate+"&endpointType=3", axiosConfig)
+      // .get("https://api.iq.inrix.com/v1/trips?od="+od+"&geoFilterType="+geoFilterType+"&points="+point+"&limit="+limit
+      // +"&providerType="+provider+"&startDateTime="+startDate+"&endDateTime="+endDate+"&endpointType=3", axiosConfig)
+      .get("https://trade-areas-api.inrix.com/v1/trips?od="+od+"&geoFilterType="+geoFilterType+"&points="+point+"&limit="+limit
+       +"&providerType="+provider+"&startDateTime="+startDate+"&endDateTime="+endDate+"&endpointType=3", axiosConfig)
       .then((response) => {
           return response.data;
       })
