@@ -73,7 +73,7 @@ export class HomeComponent implements AfterViewInit {
   showComparison: number = 0;
 
   async getDateData(lat:string,lon:string){
-    const radius = this.selectedRadius;
+    const radius = 10;
     const boxSize = this.boxZoom;
     this.dateData = await this.http.get<Box[][]>(
       "http://localhost:3000/getTripsByDate?lat="+lat+"&lon="+lon
@@ -153,7 +153,7 @@ export class HomeComponent implements AfterViewInit {
         }
         percentDif = Math.floor(percentDif * 100);
         let rect = leaflet.rectangle([box.p1,box.p2], {color: color, weight: 1, stroke: false, fillOpacity: 0.4})
-        .bindTooltip(percentDif.toString()+"% change");
+        .bindTooltip(percentDif.toString()+"% change",{direction:'top',});
         // rect.on("click",() => {
         //   console.log(box);
         // });
@@ -216,14 +216,21 @@ export class HomeComponent implements AfterViewInit {
           opacity: 0.8
         });
         box.id = boxId;
-        tooltip.setContent('<canvas id="myChart-'+boxId.toString()+'" width="300" height="200"></canvas>');
+        tooltip.setContent('<canvas id="myChart-'+boxId.toString()+'" width="350" height="250"></canvas>');
         let rect = leaflet.rectangle([box.p1,box.p2], {color: color, weight: 1, stroke: false, fillOpacity: 0.4})
-        .bindTooltip(this.showComparison ? (count.toString()+" people visited") : tooltip);
-        // .bindTooltip(tooltip);
+        .bindTooltip(this.showComparison==0 ? tooltip : (count.toString()+" people visited"),{direction:'top',})
+        // .bindTooltip((count.toString()+" people visited"),{direction:'bottom',});
+        // rect.bindPopup(tooltip);
         // rect.on("click",() => {
         //   console.log(box);
         // });
+        rect.on("click", () => {
+          rect.openPopup();
+        })
         rect.on("tooltipopen", () => {
+          if(document.getElementById('myChart-'+box?.id?.toString())==undefined){
+            return;
+          }
           let data: Date[] = box.data.slice(start,end).map(d => d.map(e => new Date(e))).flat();
           let hours = new Array(24).fill(0);
           for(let d of data){
@@ -232,7 +239,7 @@ export class HomeComponent implements AfterViewInit {
 
           const myChart = new Chart(
             //@ts-ignore
-            document.getElementById('myChart-'+box.id.toString()),
+            document.getElementById('myChart-'+box?.id?.toString()),
             {
               type: 'bar',
               data: {
@@ -308,7 +315,7 @@ export class HomeComponent implements AfterViewInit {
           color=colors[4]
         }
         let rect = leaflet.rectangle([box.p1,box.p2], {color: color, weight: 1, stroke: false, fillOpacity: 0.4})
-        .bindTooltip(count.toString()+" people visited");
+        .bindTooltip(count.toString()+" people visited",{direction:'top',});
         // rect.on("click",() => {
         //   console.log(box);
         // });
