@@ -24,11 +24,21 @@ app.get("/test", async (req,res) => {
   //37.778377%7C-122.418107 data2 - Bill Graham
   //37.778572%7C-122.389717 data3 - Oracle Park
   //37.8078%7C-122.4748 data4 - Golden Gate Welcome Center
-  const response = await tradeAreaTrips("37.8078%7C-122.4748", "%3E%3D2020-12-01T00%3A00");
+  let response;
+  try {
+    response = await tradeAreaTrips("37.8078%7C-122.4748", "%3E%3D2020-12-01T00%3A00");
+    console.log("'I've got API locked... Fox 3, good tone.'");
+    res.send(response);
+  }
+  catch (error) {
+    console.log("CATCH (line 31): " + error);
+    let fs = require("fs");
+    let text = fs.readFileSync("./exported/data1-0.json");
+    let response = JSON.parse(text);
+    res.json(JSON.stringify(response));
+  }
   // const response = await fetchToken();
-  console.log(response);
-  //Here you would probably send send your data off to another function.
-  res.send(response);
+  // console.log(response);
 });
 
 function initializeBoxes(radius, location){ //location contains longitude and latitude from address
