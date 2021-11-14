@@ -10,11 +10,9 @@ import * as leaflet from 'leaflet';
 })
 export class HomeComponent implements AfterViewInit {
 
-  timeRange: Range[] = [
-    {value: 1, display: "Last month"},
-    {value: 3, display: "Last 3 months"},
-    {value: 6, display: "Last 6 months"},
-    {value: 12, display: "Last year"},
+  displayOptions: DisplayOption[] = [
+    {value: false, display: "Raw data"},
+    {value: true, display: "Change"},
   ];
 
   radius: number[] = [5,10,25,50,100];
@@ -31,7 +29,7 @@ export class HomeComponent implements AfterViewInit {
   selectedAddress: OSMPlace | undefined;
 
   constructor(private http: HttpClient) {
-
+    this.showComparion = false;
   }
 
   async searchOSMApi(){
@@ -41,7 +39,17 @@ export class HomeComponent implements AfterViewInit {
 
   points: any[] = [];
 
-  showComparion = false;
+  updateComparison(){
+    console.log(this.showComparion);
+    if(this.showComparion){
+      this.comparisonMap();
+    }
+    else{
+      this.rawDataMap();
+    }
+  }
+
+  showComparion: boolean = false;
 
   async getDateData(lat:string,lon:string){
     const radius = 5;
@@ -50,8 +58,88 @@ export class HomeComponent implements AfterViewInit {
       "http://localhost:3000/getTripsByDate?lat="+lat+"&lon="+lon
       +"&radius="+radius.toString()+"&boxSize="+boxSize.toString()
       ).toPromise() ?? [];
-    
-    
+    if(this.showComparion){
+      this.comparisonMap();
+    }
+    else{
+      this.rawDataMap();
+    }
+  }
+
+  comparisonMap(){
+    for(let p of this.points){
+      this.map.removeLayer(p);
+    }
+    this.points = [];
+    for(let row of (this.dateData ?? [])){
+      for(let box of row){
+        let half = Math.floor(box.data.length/2);
+        let first = box.data.slice(0,half).map(e => e.numberOfVisits).reduce((a, b) => a + b);
+        let second = box.data.slice(half).map(e => e.numberOfVisits).reduce((a, b) => a + b);
+        let rawDif = second - first;
+        let color;
+        let percentDif = 0;
+        let colors = [
+          '#ff211f',//red
+          '#ff961f',//purple
+          '#f5ff1f',//yellow
+          '#60f42a',//green
+          '#0ae7ff',//light-blue
+        ];
+        // let colors = [
+        //   '#ff292d',//red
+        //   '#f8961e',//orange
+        //   '#ffe81a',//yellow
+        //   '#80e931',//green
+        //   '#32c3b7',//light-blue
+        // ];
+        // let colors = [
+        //   '#ffe01f',//yellow
+        //   '#ff931f',//orange
+        //   '#ff1f44',//red
+        //   '#ff19fb',//pink
+        //   '#961fff',//purple
+        // ];
+        if((first==0 && second==0) || (first==1 && second==0) || (first==0 && second==1)){
+          continue;
+        } else if(first==0){
+          percentDif = 1;
+          color = colors[4]
+        }
+        else{
+          percentDif = rawDif/first;
+          if(percentDif==0){
+            color=colors[2]
+          }
+          else if(percentDif>=1){
+            color = colors[4];
+          }
+          else if(percentDif>0){
+            color = colors[3];
+          }
+          else if(percentDif>-1){
+            color = colors[1];
+          }
+          else{
+            color = colors[0];
+          }
+        }
+        percentDif = Math.floor(percentDif * 100);
+        let rect = leaflet.rectangle([box.p1,box.p2], {color: color, weight: 1, stroke: false, fillOpacity: 0.4})
+        .bindTooltip(percentDif.toString()+"% change from 12/1-12/15 and 12/16-12/31");
+        rect.on("click",() => {
+          console.log(box);
+        });
+        this.points.push(rect);
+        rect.addTo(this.map);
+      }
+    }
+    const circle = leaflet.circle([this.selectedAddress?.lat ?? 0, this.selectedAddress?.lon ?? 0], {color: "#ffffff", radius: 100, fillOpacity: 1});
+    this.points.push(circle);
+    circle.addTo(this.map);
+  }
+
+  rawDataMap(){
     for(let p of this.points){
       this.map.removeLayer(p);
     }
@@ -60,35 +148,30 @@ export class HomeComponent implements AfterViewInit {
       for(let box of row){
         let count = box.data.map(e => e.numberOfVisits).reduce((a, b) => a + b);
         let color;
+        let colors = [
+          '#1fff9e',//#1bf1ea
+          '#0abeff',//#1b8fee
+          '#000eff',//#2b1bf2
+          '#a000ff',//#9d15ec
+          '#ff1f69',//#f518d8
+        ];
         if(count==0){
-          color = this.hslToHex(0,100,50);
           continue;
         } else if(count==1){
-          color = '#1fff9e'
-          // color = "#1bf1ea"
-          // color = this.hslToHex(20,100,50);
+          color = colors[0]
         }
         else if(count<=3){
-          color = '#0abeff'
-          // color = "#1b8fee"
-          // color = this.hslToHex(40,100,50);
+          color = colors[1]
         }
         else if(count<=6){
-          color='#000eff'
-          // color = "#2b1bf2"
-          // color = this.hslToHex(60,100,50);
+          color=colors[2]
         }
         else if(count<=10){
-          color='#a000ff'
-          // color = "#9d15ec"
-          // color = this.hslToHex(80,100,50);
+          color=colors[3]
         }
         else{
-          color='#ff1f69'
-          // color = "#f518d8"
-          // color = this.hslToHex(100,100,50);
+          color=colors[4]
         }
-        console.log(count,color);
         let rect = leaflet.rectangle([box.p1,box.p2], {color: color, weight: 1, stroke: false, fillOpacity: 0.4})
         .bindTooltip(count.toString()+" visited between Dec 1st and 31st in 2020");
         rect.on("click",() => {
@@ -97,11 +180,10 @@ export class HomeComponent implements AfterViewInit {
         this.points.push(rect);
         rect.addTo(this.map);
       }
-      // const marker = leaflet.marker([this.selectedAddress?.lat ?? 0, this.selectedAddress?.lon ?? 0]);
-      const circle = leaflet.circle([this.selectedAddress?.lat ?? 0, this.selectedAddress?.lon ?? 0], {color: "#ffffff", radius: 100});
-      this.points.push(circle);
-      circle.addTo(this.map);
     }
+    const circle = leaflet.circle([this.selectedAddress?.lat ?? 0, this.selectedAddress?.lon ?? 0], {color: "#ffffff", radius: 100, fillOpacity: 1});
+    this.points.push(circle);
+    circle.addTo(this.map);
   }
 
   selectAddress(res: OSMPlace){
@@ -150,8 +232,8 @@ export class HomeComponent implements AfterViewInit {
 
 }
 
-interface Range{
-  value: number;
+interface DisplayOption{
+  value: boolean;
   display: string;
 }
 

@@ -17,16 +17,16 @@
       </mat-option>
     </mat-autocomplete>
   </mat-form-field>
-  <!-- <mat-form-field appearance="fill">
-    <mat-label>Time Range</mat-label>
-    <mat-select>
-      <mat-option *ngFor="let range of timeRange" [value]="range.value">
-        {{range.display}}
+  <mat-form-field appearance="fill">
+    <mat-label>Display option</mat-label>
+    <mat-select [(ngModel)]='showComparion' name="option" (selectionChange)="updateComparison()">
+      <mat-option *ngFor="let option of displayOptions" [value]="option.value">
+        {{option.display}}
       </mat-option>
     </mat-select>
   </mat-form-field>
   
-  <mat-form-field appearance="fill">
+  <!-- <mat-form-field appearance="fill">
       <mat-label>Radius</mat-label>
       <mat-select>
         <mat-option *ngFor="let r of radius" [value]="radius">
