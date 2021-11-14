@@ -13,7 +13,7 @@
           [matAutocomplete]="auto">
     <mat-autocomplete #auto="matAutocomplete">
       <mat-option *ngFor="let res of osmResults" [value]="res" (click)='selectAddress(res)'>
-        <span style='font-size: 10px'>{{res.display_name}}</span>
+        <span style='font-size: 12px'>{{res.display_name}}</span>
       </mat-option>
     </mat-autocomplete>
   </mat-form-field>

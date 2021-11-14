@@ -27,19 +27,24 @@ app.get("/getTripsByDate", async (req,res) => {
 
   let lat = Number(req.query.lat);
   let lon = Number(req.query.lon);
-  let data = await fullWorkflow(lat,lon);
+  let radius = Number(req.query.radius ?? "5");
+  let boxSize = Number(req.query.boxSize ?? "0.5");
+  let data = await fullWorkflow(lat,lon,radius,boxSize);
   //Here you would probably send send your data off to another function.
   res.send(data);
 });
 
-app.get("/test", async (req,res) => {
+app.get("/rawInrix", async (req,res) => {
   //37.792137265306124%7C-122.4107742857143 data.json - random
   //37.778377%7C-122.418107 data2 - Bill Graham
   //37.778572%7C-122.389717 data3 - Oracle Park
   //37.8078%7C-122.4748 data4 - Golden Gate Welcome Center
+  //?lat=37.7696206&lon=-122.4221812
   let response;
   try {
-    response = await tradeAreaTrips("37.8078%7C-122.4748", "%3E%3D2020-12-01T00%3A00");
+    let lat = Number(req.query.lat);
+    let lon = Number(req.query.lon);
+    response = await tradeAreaTrips(lat.toString()+"%7C"+lon.toString(), "%3E%3D2020-12-01T00%3A00");
     console.log("'I've got API locked... Fox 3, good tone.'");
     res.send(response);
   }
@@ -53,11 +58,10 @@ app.get("/test", async (req,res) => {
   // console.log(response);
 });
 
-function initializeBoxes(radius, location: number[]){ //location contains longitude and latitude from address
+function initializeBoxes(radius:number=10, location: number[],boxWidth:number=0.5){ //location contains longitude and latitude from address
   let boxes:Box[][] = [];
   let r=0;
   let c=0;
-  const boxWidth = 0.5;
   for (let x=radius*-1;x<radius;x+=boxWidth){
     boxes.push([]);
     for(let y=radius*-1;y<radius;y+=boxWidth){
@@ -272,27 +276,13 @@ async function getDailyTripData(lat,lon){
   return arr;
 }
 
-async function fullWorkflow(lat: number,lon: number){
-  // let lat =37.778377;
-  // let lon = -122.418107;
-  let boxes = initializeBoxes(5,[lat,lon]);
+async function fullWorkflow(lat: number,lon: number,radius:number=5,boxSize:number=0.5){
+  let boxes = initializeBoxes(radius,[lat,lon],boxSize);
   let dataByDate = await getDailyTripData(lat,lon);
   // console.log(dataByDate);
   for(let i=0; i<dataByDate.length; i++){
     processDayData(dataByDate[i],boxes,i);
   }
   return boxes;
-  // fs.writeFileSync('dataByDate.json', JSON.stringify(dataByDate));
-  // fs.writeFileSync('boxes2.json', JSON.stringify(boxes));
 }
-
-  // let lat =37.778377;
-  // let lon = -122.418107;
-fullWorkflow(37.778377,-122.418107);
-// fs.writeFileSync('box.json', JSON.stringify(initializeBoxes(10,[37.778377,-122.418107])));
-
-
-
-// let rawdata = fs.readFileSync('student.json');
-// let student = JSON.parse(rawdata);
-// console.log(student);
+// fullWorkflow(37.778377,-122.418107);

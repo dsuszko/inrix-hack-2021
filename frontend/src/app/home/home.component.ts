@@ -20,6 +20,8 @@ export class HomeComponent implements AfterViewInit {
   radius: number[] = [5,10,25,50,100];
   osmResults: OSMPlace[] | undefined = [];
 
+  dateData: Box[][] = [];
+
   options = [];
 
   searchBoxAddress = "";
@@ -37,10 +39,24 @@ export class HomeComponent implements AfterViewInit {
     this.osmResults = await this.http.get<OSMPlace[]>("https://nominatim.openstreetmap.org/search?format=json&q="+this.searchBoxAddress).toPromise();
   }
 
+  points: any[] = [];
+
+  showComparion = false;
+
   async getDateData(lat:string,lon:string){
-    const rawData = await this.http.get<Box[][]>("http://localhost:3000/getTripsByDate?lat="+lat+"&lon="+lon).toPromise();
-    console.log(rawData);
-    for(let row of (rawData ?? [])){
+    const radius = 5;
+    const boxSize = 0.5;
+    this.dateData = await this.http.get<Box[][]>(
+      "http://localhost:3000/getTripsByDate?lat="+lat+"&lon="+lon
+      +"&radius="+radius.toString()+"&boxSize="+boxSize.toString()
+      ).toPromise() ?? [];
+    
+    
+    for(let p of this.points){
+      this.map.removeLayer(p);
+    }
+    this.points = [];
+    for(let row of (this.dateData ?? [])){
       for(let box of row){
         let count = box.data.map(e => e.numberOfVisits).reduce((a, b) => a + b);
         let color;
@@ -48,37 +64,55 @@ export class HomeComponent implements AfterViewInit {
           color = this.hslToHex(0,100,50);
           continue;
         } else if(count==1){
-          color = this.hslToHex(20,100,50);
+          color = '#1fff9e'
+          // color = "#1bf1ea"
+          // color = this.hslToHex(20,100,50);
         }
         else if(count<=3){
-          color = this.hslToHex(40,100,50);
+          color = '#0abeff'
+          // color = "#1b8fee"
+          // color = this.hslToHex(40,100,50);
         }
         else if(count<=6){
-          color = this.hslToHex(60,100,50);
+          color='#000eff'
+          // color = "#2b1bf2"
+          // color = this.hslToHex(60,100,50);
         }
         else if(count<=10){
-          color = this.hslToHex(80,100,50);
+          color='#a000ff'
+          // color = "#9d15ec"
+          // color = this.hslToHex(80,100,50);
         }
         else{
-          color = this.hslToHex(100,100,50);
+          color='#ff1f69'
+          // color = "#f518d8"
+          // color = this.hslToHex(100,100,50);
         }
         console.log(count,color);
-        let rect = leaflet.rectangle([box.p1,box.p2], {color: color, weight: 1})
-        .bindTooltip(JSON.stringify(box.p1)+"\n"+JSON.stringify(box.p2)+"\n"+count.toString());
+        let rect = leaflet.rectangle([box.p1,box.p2], {color: color, weight: 1, stroke: false, fillOpacity: 0.4})
+        .bindTooltip(count.toString()+" visited between Dec 1st and 31st in 2020");
         rect.on("click",() => {
           console.log(box);
         });
+        this.points.push(rect);
         rect.addTo(this.map);
       }
+      // const marker = leaflet.marker([this.selectedAddress?.lat ?? 0, this.selectedAddress?.lon ?? 0]);
+      const circle = leaflet.circle([this.selectedAddress?.lat ?? 0, this.selectedAddress?.lon ?? 0], {color: "#ffffff", radius: 100});
+      this.points.push(circle);
+      circle.addTo(this.map);
     }
   }
 
   selectAddress(res: OSMPlace){
+    for(let p of this.points){
+      this.map.removeLayer(p);
+    }
+    this.points = [];
     this.selectedAddress = res;
     this.searchBoxAddress = res.display_name;
     this.searchAddress.clear();
     console.log(res);
-    const circle = leaflet.circle([res.lat, res.lon], {radius: 200}).addTo(this.map);
     this.getDateData(res.lat.toString(),res.lon.toString());
   }
 
@@ -90,7 +124,7 @@ export class HomeComponent implements AfterViewInit {
 
   initMap(): void {
     this.map = leaflet.map('map', {
-      center: [ 37.71, -122.435 ],
+      center: [ 37.77, -122.435 ],
       zoom: 12
     });
 
@@ -145,3 +179,10 @@ interface BoxData{
   startDate: Date;
   numberOfVisits: number;
 }
+
+//Test locations
+//211 Valencia St - Burma Love (Burmese restaurant)
+//99 Grove Street - Civic Center
+//1 Telegraph Hill Blvd - Coit Tower
+//24 Willie Mays Plaza - Oracle Park
+//1 Warriors Way - Chase Center
