@@ -27,9 +27,11 @@ app.get("/test", async (req,res) => {
   res.send(response);
 });
 
-
-
-
+app.get("/token", async (req, res) => {
+  const response = await fetchToken();
+  console.log(response);
+  res.send(response);
+})
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
