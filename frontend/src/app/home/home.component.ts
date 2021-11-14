@@ -315,10 +315,7 @@ export class HomeComponent implements AfterViewInit {
       center: [ 37.76, -122.435 ],
       zoom: 13
     });
-    this.map.on('zoomend', (e:any) => {
-      let center = this.map.getCenter();
-      let newZoom = e.target._zoom;
-      this.map2.setView(center,newZoom)
+
       // if(this.boxZoom > 0.25 && newZoom >=16){
       //   this.boxZoom = 0.25;
       //   if(this.selectedAddress!=null){
@@ -332,9 +329,24 @@ export class HomeComponent implements AfterViewInit {
       //   }
       // }
       // console.log(newZoom);
+    this.map.on('zoomend', (e:any) => {
+      let center = this.map.getCenter();
+      let newZoom = e.target._zoom;
+      this.map2.setView(center,newZoom)
+    });
+    this.map.on('moveend', (e:any) => {
+      let center = this.map.getCenter();
+      let newZoom = e.target._zoom;
+      this.map2.setView(center,newZoom)
     });
 
     this.map2.on('zoomend', (e:any) => {
+      let center = this.map2.getCenter();
+      let newZoom = e.target._zoom;
+      this.map.setView(center,newZoom)
+    });
+
+    this.map2.on('moveend', (e:any) => {
       let center = this.map2.getCenter();
       let newZoom = e.target._zoom;
       this.map.setView(center,newZoom)
