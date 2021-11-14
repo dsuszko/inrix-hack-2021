@@ -25,6 +25,10 @@ app.get("/test", async (req,res) => {
   console.log(response);
   //Here you would probably send send your data off to another function.
   res.send(response);
+
+  console.log(response.data.length);
+
+  for(let i: number = 0; i < )
 });
 
 app.get("/token", async (req, res) => {
@@ -87,7 +91,7 @@ async function tradeAreaTrips(point, startDate) {
       .get("https://api.iq.inrix.com/v1/trips?"+
       "od="+od+"&geoFilterType="+geoFilterType+
       "&radius="+radius+"&points="+point+
-      "&limit="+limit.toString()+"&startDateTime="+startDate+"&endDateTime="+endDate,axiosConfig)
+      "&limit="+limit.toString()+"&startDateTime="+startDate+"&endDateTime="+endDate+"&endpointType=3",axiosConfig)
       // .get("https://api.iq.inrix.com/v1/trips?od="+od+"&geoFilterType="+geoFilterType+"&points="+point+"&limit="+limit
       // +"&providerType="+provider+"&startDateTime="+startDate+"&endDateTime="+endDate+"&endpointType=3", axiosConfig)
       .then((response) => {
