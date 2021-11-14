@@ -4,3 +4,4 @@ index.js*
 *.cache
 .vscode
 .idea
+.env
