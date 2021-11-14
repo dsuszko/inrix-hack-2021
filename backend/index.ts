@@ -50,7 +50,7 @@ app.get("/rawInrix", async (req,res) => {
   }
   catch (error) {
     console.log("CATCH (line 31): " + error);
-    let text = fs.readFileSync("./exported/data1-0.json");
+    let text = fs.readFileSync("./exported/burmaLove.json");
     let response = JSON.parse(text);
     res.json(JSON.stringify(response));
   }
@@ -225,7 +225,7 @@ async function tradeAreaTrips(point, startDate) {
   }
   catch(e){
     console.log(e);
-    let text = fs.readFileSync("./exported/data1-0.json");
+    let text = fs.readFileSync("./exported/burmaLove.json");
     return JSON.parse(text);
   }
 }

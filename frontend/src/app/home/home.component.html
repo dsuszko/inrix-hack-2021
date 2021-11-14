@@ -1,51 +1,66 @@
+<div class='header'>
+  <div id='logo-box'>
+    <img src='assets/horizontal-white.png' id='logo'>
+  </div>
+  
 
+  <form class="form">
+    <mat-form-field class='field' id='addressSearch' appearance="fill">
+      <mat-label>Address</mat-label>
+      <input type="text"
+            placeholder="Address"
+            aria-label="Search for a business address"
+            name='address'
+            matInput
+            [(ngModel)]="searchBoxAddress"
+            (ngModelChange)="searchAddress()"
+            [matAutocomplete]="auto">
+      <mat-autocomplete #auto="matAutocomplete">
+        <mat-option *ngFor="let res of osmResults" [value]="res" (click)='selectAddress(res)'>
+          <span style='font-size: 12px'>{{res.display_name}}</span>
+        </mat-option>
+      </mat-autocomplete>
+    </mat-form-field>
 
-<form class="example-form">
-  <mat-form-field id='addressSearch' appearance="fill">
-    <mat-label>Address</mat-label>
-    <input type="text"
-          placeholder="Address"
-          aria-label="Search for a business address"
-          name='address'
-          matInput
-          [(ngModel)]="searchBoxAddress"
-          (ngModelChange)="searchAddress()"
-          [matAutocomplete]="auto">
-    <mat-autocomplete #auto="matAutocomplete">
-      <mat-option *ngFor="let res of osmResults" [value]="res" (click)='selectAddress(res)'>
-        <span style='font-size: 12px'>{{res.display_name}}</span>
-      </mat-option>
-    </mat-autocomplete>
-  </mat-form-field>
-  <mat-form-field appearance="fill">
-    <mat-label>Display option</mat-label>
-    <mat-select [(ngModel)]='showComparion' name="option" (selectionChange)="updateMap()">
-      <mat-option *ngFor="let option of displayOptions" [value]="option.value">
-        {{option.display}}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
+    <!-- <mat-form-field appearance="fill">
+      <mat-label>Radius</mat-label>
+      <mat-select [(ngModel)]='selectedRadius' name='radius' (selectionChange)="selectAddress(selectedAddress)">
+        <mat-option *ngFor="let r of radius" [value]="radius">
+          {{r}} miles
+        </mat-option>
+      </mat-select>
+    </mat-form-field> -->
 
-  <mat-form-field appearance="fill">
-    <mat-label>{{showComparion ? "First " : ""}}Date Range</mat-label>
-    <mat-date-range-input [rangePicker]="rangePicker" [min]="minDate" [max]="maxDate">
-      <input name='startDate' matStartDate placeholder="Start date" [(ngModel)]="startDate">
-      <input name='endDate' matEndDate placeholder="End date" [(ngModel)]="endDate" (dateChange)="updateMap()">
-    </mat-date-range-input>
-    <mat-datepicker-toggle matSuffix [for]="rangePicker"></mat-datepicker-toggle>
-    <mat-date-range-picker #rangePicker></mat-date-range-picker>
-  </mat-form-field>
+    <mat-form-field class='field' appearance="fill">
+      <mat-label>Display option</mat-label>
+      <mat-select [(ngModel)]='showComparion' name="option" (selectionChange)="updateMap()">
+        <mat-option *ngFor="let option of displayOptions" [value]="option.value">
+          {{option.display}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
 
-  <mat-form-field appearance="fill" *ngIf='showComparion'>
-    <mat-label>Second Date Range</mat-label>
-    <mat-date-range-input [rangePicker]="rangePicker" [min]="minDate" [max]="maxDate">
-      <input name='startDate2' matStartDate placeholder="Start date" [(ngModel)]="startDate2">
-      <input name='endDate2' matEndDate placeholder="End date" [(ngModel)]="endDate2" (dateChange)="updateMap()">
-    </mat-date-range-input>
-    <mat-datepicker-toggle matSuffix [for]="rangePicker"></mat-datepicker-toggle>
-    <mat-date-range-picker #rangePicker></mat-date-range-picker>
-  </mat-form-field>
-</form>
+    <mat-form-field class='field' appearance="fill">
+      <mat-label>{{showComparion ? "First " : ""}}Date Range</mat-label>
+      <mat-date-range-input [rangePicker]="rangePicker" [min]="minDate" [max]="maxDate">
+        <input name='startDate' matStartDate placeholder="Start date" [(ngModel)]="startDate">
+        <input name='endDate' matEndDate placeholder="End date" [(ngModel)]="endDate" (dateChange)="updateMap()">
+      </mat-date-range-input>
+      <mat-datepicker-toggle matSuffix [for]="rangePicker"></mat-datepicker-toggle>
+      <mat-date-range-picker #rangePicker></mat-date-range-picker>
+    </mat-form-field>
+
+    <mat-form-field class='field' appearance="fill" *ngIf='showComparion'>
+      <mat-label>Second Date Range</mat-label>
+      <mat-date-range-input [rangePicker]="rangePicker" [min]="minDate" [max]="maxDate">
+        <input name='startDate2' matStartDate placeholder="Start date" [(ngModel)]="startDate2">
+        <input name='endDate2' matEndDate placeholder="End date" [(ngModel)]="endDate2" (dateChange)="updateMap()">
+      </mat-date-range-input>
+      <mat-datepicker-toggle matSuffix [for]="rangePicker"></mat-datepicker-toggle>
+      <mat-date-range-picker #rangePicker></mat-date-range-picker>
+    </mat-form-field>
+  </form>
+</div>
 
 <div class="map-container">
   <div class="map-frame">

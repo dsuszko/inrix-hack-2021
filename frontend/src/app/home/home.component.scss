@@ -1,10 +1,41 @@
 #addressSearch{
-  width: 100%;
-  max-width: 500px;
+  width: 50%;
+  max-width: 400px;
 }
+
+.form{
+  margin-left: 300px;
+  height: 60px;
+  display: inline;
+}
+
+.field{
+  padding-top: -20px;
+  margin-right: 20px;
+}
+
+input{
+  color: white;
+}
+
+#logo-box{
+  display: inline;
+  position: relative;
+  height: 50px;
+}
+#logo{
+  position:absolute;
+  height: 60px;
+}
+.header{
+  position: relative;
+  margin: 30px;
+
+}
+
 .map-container {
     position: absolute;
-    top: 60px;
+    top: 90px;
     left: 0;
     right: 0;
     bottom: 0;

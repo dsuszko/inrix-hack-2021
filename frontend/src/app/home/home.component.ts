@@ -15,7 +15,9 @@ export class HomeComponent implements AfterViewInit {
     {value: true, display: "Change"},
   ];
 
-  radius: number[] = [5,10,25,50,100];
+  selectedRadius: number = 5;
+
+  radius: number[] = [1,2,5,10,25,50];
   osmResults: OSMPlace[] | undefined = [];
 
   dateData: Box[][] = [];
@@ -65,8 +67,8 @@ export class HomeComponent implements AfterViewInit {
   showComparion: boolean = false;
 
   async getDateData(lat:string,lon:string){
-    const radius = 5;
-    const boxSize = 0.5;
+    const radius = this.selectedRadius;
+    const boxSize = this.boxZoom;
     this.dateData = await this.http.get<Box[][]>(
       "http://localhost:3000/getTripsByDate?lat="+lat+"&lon="+lon
       +"&radius="+radius.toString()+"&boxSize="+boxSize.toString()
@@ -143,7 +145,7 @@ export class HomeComponent implements AfterViewInit {
         }
         percentDif = Math.floor(percentDif * 100);
         let rect = leaflet.rectangle([box.p1,box.p2], {color: color, weight: 1, stroke: false, fillOpacity: 0.4})
-        .bindTooltip(percentDif.toString()+"% change from 12/1-12/15 and 12/16-12/31");
+        .bindTooltip(percentDif.toString()+"% change");
         rect.on("click",() => {
           console.log(box);
         });
@@ -151,9 +153,17 @@ export class HomeComponent implements AfterViewInit {
         rect.addTo(this.map);
       }
     }
-    const circle = leaflet.circle([this.selectedAddress?.lat ?? 0, this.selectedAddress?.lon ?? 0], {color: "#ffffff", radius: 100, fillOpacity: 1});
-    this.points.push(circle);
-    circle.addTo(this.map);
+    var myIcon = leaflet.icon({
+      iconUrl: 'assets/White_Logo.png',
+      // iconSize: [32],
+    });
+    const marker = leaflet.marker([this.selectedAddress?.lat ?? 0, this.selectedAddress?.lon ?? 0], {icon: myIcon}).addTo(this.map);
+    this.points.push(marker);
+    marker.addTo(this.map);
+
+    // const circle = leaflet.circle([this.selectedAddress?.lat ?? 0, this.selectedAddress?.lon ?? 0], {color: "#ffffff", radius: 100, fillOpacity: 1});
+    // this.points.push(circle);
+    // circle.addTo(this.map);
   }
 
   rawDataMap(){
@@ -192,7 +202,7 @@ export class HomeComponent implements AfterViewInit {
           color=colors[4]
         }
         let rect = leaflet.rectangle([box.p1,box.p2], {color: color, weight: 1, stroke: false, fillOpacity: 0.4})
-        .bindTooltip(count.toString()+" visited between Dec 1st and 31st in 2020");
+        .bindTooltip(count.toString()+" people visited");
         rect.on("click",() => {
           console.log(box);
         });
@@ -200,21 +210,32 @@ export class HomeComponent implements AfterViewInit {
         rect.addTo(this.map);
       }
     }
-    const circle = leaflet.circle([this.selectedAddress?.lat ?? 0, this.selectedAddress?.lon ?? 0], {color: "#ffffff", radius: 100, fillOpacity: 1});
-    this.points.push(circle);
-    circle.addTo(this.map);
+    var myIcon = leaflet.icon({
+      iconUrl: 'assets/White_Logo.png',
+      iconSize: [32,32],
+
+    });
+    const marker = leaflet.marker([this.selectedAddress?.lat ?? 0, this.selectedAddress?.lon ?? 0], {icon: myIcon}).addTo(this.map);
+    this.points.push(marker);
+    marker.addTo(this.map);
+    // const circle = leaflet.circle([this.selectedAddress?.lat ?? 0, this.selectedAddress?.lon ?? 0], {color: "#ffffff", radius: 152.4, fillOpacity: 1});
+    // this.points.push(circle);
+    // circle.addTo(this.map);
   }
 
-  selectAddress(res: OSMPlace){
+  selectAddress(res: OSMPlace | undefined){
+    if(res==null || res==undefined){
+      return;
+    }
     for(let p of this.points){
       this.map.removeLayer(p);
     }
     this.points = [];
     this.selectedAddress = res;
-    this.searchBoxAddress = res.display_name;
+    this.searchBoxAddress = res?.display_name ?? "";
     this.searchAddress.clear();
     console.log(res);
-    this.getDateData(res.lat.toString(),res.lon.toString());
+    this.getDateData((res?.lat ?? 0).toString(),(res?.lon ?? 0).toString());
   }
 
   ngAfterViewInit(): void {
@@ -223,10 +244,31 @@ export class HomeComponent implements AfterViewInit {
 
   map: any;
 
+  boxZoom: number = 0.5;
+
   initMap(): void {
     this.map = leaflet.map('map', {
-      center: [ 37.77, -122.435 ],
-      zoom: 12
+      center: [ 37.76, -122.435 ],
+      zoom: 13
+    });
+    this.map.on('zoomend', (e:any) => {
+      // c
+      let newZoom = e.target._zoom;
+      if(this.boxZoom == 0.5 && newZoom >=16){
+        this.boxZoom = 0.25;
+        if(this.selectedAddress!=null){
+          this.selectAddress(this.selectedAddress);
+        }
+      }
+      else if(this.boxZoom == 0.25 && newZoom < 16){
+        this.boxZoom = 0.5;
+        if(this.selectedAddress!=null){
+          this.selectAddress(this.selectedAddress);
+        }
+      }
+      // if(newZoom<)
+      // if()
+      console.log(newZoom);
     });
 
     const tiles = leaflet.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
